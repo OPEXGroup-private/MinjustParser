@@ -1,19 +1,31 @@
-﻿// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
+﻿using System;
+using System.Diagnostics;
 using ITCC.Logging.Core;
+using ITCC.Logging.Windows.Loggers;
+using MinjustParser.Browser;
 
 namespace MinjustParser
 {
-    public class Program
+    class Program
     {
-        public static void Main(string[] args)
+        static void Main(string[] args)
         {
-        }
+            try
+            {
+                Logger.Level = LogLevel.Debug;
+                Logger.RegisterReceiver(new ColouredConsoleLogger());
 
-        private static void InitLoggers()
-        {
-            Logger.Level = LogLevel.Trace;
+                var selenium = Process.Start("chromedriver.exe", "--port=5555");
+
+                var onGoogleSearchPage = new OnGoogleSearchPage();
+                onGoogleSearchPage.Should_find_search_box();
+                selenium?.Kill();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                Environment.Exit(1);
+            }
         }
     }
 }
