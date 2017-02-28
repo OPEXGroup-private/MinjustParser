@@ -24,6 +24,9 @@ namespace MinjustParser.Browser
 
         public void Should_find_search_box()
         {
+            if (!File.Exists("output.csv"))
+                File.Create("output.csv");
+
             _driver.Navigate().GoToUrl(BaseAddress);
 
             var upperTable = _driver.FindElement(By.Id("pdg"));
@@ -82,13 +85,13 @@ namespace MinjustParser.Browser
 
         private static void WriteRow(IWebElement row)
         {
-            using (var fileStream = new FileStream("output.csv", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite))
+            using (var fileStream = new FileStream("output.csv", FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
             {
                 using (var streamWriter = new StreamWriter(fileStream, Encoding.UTF8))
                 {
                     var dataElements = row.FindElements(By.ClassName("pdg_item_odd"));
                     var text = string.Join("\t", dataElements.Select(de => de.Text));
-                    streamWriter.WriteLine($"{text}\r\n");
+                    streamWriter.WriteLine(text);
                 }
             }
         }
