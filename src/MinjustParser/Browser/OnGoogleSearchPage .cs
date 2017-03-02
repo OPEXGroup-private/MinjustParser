@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -13,6 +14,7 @@ namespace MinjustParser.Browser
     {
         private readonly IWebDriver _driver;
         private const string BaseAddress = @"http://unro.minjust.ru/NKOs.aspx";
+        private static readonly Regex IdRegex = new Regex(@"\d{6,9}", RegexOptions.Compiled);
 
         public OnGoogleSearchPage()
         {
@@ -40,7 +42,9 @@ namespace MinjustParser.Browser
                 Thread.Sleep(5000);
                 
                 var rows = _driver.FindElements(By.TagName("tr"));
-                var goodRows = rows.Where(e => e.GetCssValue("cursor") == "auto").ToList();
+                var goodRows = rows
+                    .Where(e => e.GetCssValue("cursor") == "auto")
+                    .ToList();
                 Console.WriteLine($"Found {goodRows.Count} rows");
 
                 using (var fileStream = new FileStream("output.csv", FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
@@ -86,9 +90,23 @@ namespace MinjustParser.Browser
             }
         }
 
-        private static void WriteRow(StreamWriter streamWriter, IWebElement row)
+        private static void WriteRow(TextWriter streamWriter, IWebElement row)
         {
-            var dataElements = row.FindElements(By.ClassName("pdg_item_odd"));
+            var dataElements = new List<IWebElement>();
+            var odd = row.GetAttribute("odd") == @"_odd";
+            if (odd)
+            {
+                dataElements.AddRange(row.FindElements(By.ClassName("pdg_item_left_odd")));
+                dataElements.AddRange(row.FindElements(By.ClassName("pdg_item_odd")));
+                dataElements.AddRange(row.FindElements(By.ClassName("pdg_item_right_odd")));
+            }
+            else
+            {
+                dataElements.AddRange(row.FindElements(By.ClassName("pdg_item_left_even")));
+                dataElements.AddRange(row.FindElements(By.ClassName("pdg_item_even")));
+                dataElements.AddRange(row.FindElements(By.ClassName("pdg_item_right_even")));
+            }
+            
             var text = string.Join("\t", dataElements.Select(de => de.Text));
             if (string.IsNullOrWhiteSpace(text))
                 return;
