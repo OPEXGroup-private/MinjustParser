@@ -39,7 +39,7 @@ namespace MinjustParser.Browser
             var currentPage = 1;
             while (true)
             {
-                Thread.Sleep(5000);
+                Console.WriteLine($"Processing page {currentPage}");
                 
                 var rows = _driver.FindElements(By.TagName("tr"));
                 var goodRows = rows
@@ -47,24 +47,28 @@ namespace MinjustParser.Browser
                     .ToList();
                 Console.WriteLine($"Found {goodRows.Count} rows");
 
+                var currentRow = 0;
                 using (var fileStream = new FileStream("output.csv", FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
                 using (var streamWriter = new StreamWriter(fileStream, Encoding.UTF8))
                 {
                     foreach (var row in goodRows)
                     {
+                        currentRow++;
+                        Console.WriteLine($"\tProcessing row {currentRow}");
                         WriteRow(streamWriter,row);
                     }
                     streamWriter.Flush();
                 }
 
-                var page = GetNextPageButton(currentPage);
-                if (page == null)
+                var nextPageButton = GetNextPageButton(currentPage);
+                if (nextPageButton == null)
                 {
                     Console.WriteLine("Done");
                     break;
                 }
-                page.Click();
                 currentPage++;
+                Console.WriteLine("Going to page");
+                nextPageButton.Click();
             }
 
             _driver.Quit();
@@ -109,7 +113,7 @@ namespace MinjustParser.Browser
             }
             
             var text = string.Join("\t", dataElements.Select(de => de.Text));
-            text = text.Replace("-\r\n", string.Empty);
+            text = text.Replace("-\n", string.Empty);
             if (string.IsNullOrWhiteSpace(text))
                 return;
 
