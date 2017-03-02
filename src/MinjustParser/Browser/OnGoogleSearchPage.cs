@@ -39,13 +39,13 @@ namespace MinjustParser.Browser
             var currentPage = 1;
             while (true)
             {
-                Console.WriteLine($"Processing page {currentPage}");
+                WriteWithTime($"Processing page {currentPage}");
                 
                 var rows = _driver.FindElements(By.TagName("tr"));
                 var goodRows = rows
                     .Where(e => e.GetCssValue("cursor") == "auto" && e.GetAttribute("odd") != null)
                     .ToList();
-                Console.WriteLine($"Found {goodRows.Count} rows");
+                WriteWithTime($"Found {goodRows.Count} rows");
 
                 var currentRow = 0;
                 using (var fileStream = new FileStream("output.csv", FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
@@ -54,7 +54,7 @@ namespace MinjustParser.Browser
                     foreach (var row in goodRows)
                     {
                         currentRow++;
-                        Console.WriteLine($"\tProcessing row {currentRow}");
+                        WriteWithTime($"\tProcessing row {currentRow}");
                         WriteRow(streamWriter,row);
                     }
                     streamWriter.Flush();
@@ -63,11 +63,11 @@ namespace MinjustParser.Browser
                 var nextPageButton = GetNextPageButton(currentPage);
                 if (nextPageButton == null)
                 {
-                    Console.WriteLine("Done");
+                    WriteWithTime("Done");
                     break;
                 }
                 currentPage++;
-                Console.WriteLine("Going to page");
+                WriteWithTime("Going to page");
                 nextPageButton.Click();
             }
 
@@ -84,7 +84,7 @@ namespace MinjustParser.Browser
                 var pageButtons = _driver.FindElements(By.Id("pdg_next")).ToList();
                 foreach (var pageButton in pageButtons)
                 {
-                    Console.WriteLine($"Pagebuttons: {pageButton.Text}");
+                    WriteWithTime($"Pagebuttons: {pageButton.Text}");
                 }
                 return pageButtons.FirstOrDefault();
             }
@@ -120,5 +120,7 @@ namespace MinjustParser.Browser
             streamWriter.WriteLine(text);
             
         }
+
+        private void WriteWithTime(string message) => Console.WriteLine($"{DateTime.Now:T} {message}");
     }
 }
