@@ -35,27 +35,30 @@ namespace MinjustParser.Browser
             targetLink.Click();
 
             var currentPage = 1;
-            IWebElement page;
             while (true)
             {
                 Thread.Sleep(5000);
-                page = GetNextPageButton(currentPage);
+                
+                var rows = _driver.FindElements(By.TagName("tr"));
+                var goodRows = rows.Where(e => e.GetCssValue("cursor") == "auto").ToList();
+                Console.WriteLine($"Found {goodRows.Count} rows");
+
+                using (var fileStream = new FileStream("output.csv", FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
+                using (var streamWriter = new StreamWriter(fileStream, Encoding.UTF8))
+                {
+                    foreach (var row in goodRows)
+                    {
+                        WriteRow(streamWriter,row);
+                    }
+                }
+
+                var page = GetNextPageButton(currentPage);
                 if (page == null)
                 {
                     Console.WriteLine("Done");
                     break;
                 }
                 page.Click();
-
-                Thread.Sleep(2000);
-                var rows = _driver.FindElements(By.TagName("tr"));
-                var goodRows = rows.Where(e => e.GetCssValue("cursor") == "auto").ToList();
-                Console.WriteLine($"Found {goodRows.Count} rows");
-                foreach (var row in goodRows)
-                {
-                    WriteRow(row);
-                }
-                
                 currentPage++;
             }
 
@@ -83,17 +86,15 @@ namespace MinjustParser.Browser
             }
         }
 
-        private static void WriteRow(IWebElement row)
+        private static void WriteRow(StreamWriter streamWriter, IWebElement row)
         {
-            using (var fileStream = new FileStream("output.csv", FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
-            {
-                using (var streamWriter = new StreamWriter(fileStream, Encoding.UTF8))
-                {
-                    var dataElements = row.FindElements(By.ClassName("pdg_item_odd"));
-                    var text = string.Join("\t", dataElements.Select(de => de.Text));
-                    streamWriter.WriteLine(text);
-                }
-            }
+            var dataElements = row.FindElements(By.ClassName("pdg_item_odd"));
+            var text = string.Join("\t", dataElements.Select(de => de.Text));
+            if (string.IsNullOrWhiteSpace(text))
+                return;
+
+            streamWriter.WriteLine(text);
+            streamWriter.Flush();
         }
     }
 }
