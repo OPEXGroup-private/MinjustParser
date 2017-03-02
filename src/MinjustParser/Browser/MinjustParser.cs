@@ -3,20 +3,18 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Remote;
 
 namespace MinjustParser.Browser
 {
-    public class OnGoogleSearchPage : IDisposable
+    public class MinjustParser : IDisposable
     {
-        private readonly IWebDriver _driver;
+        private readonly RemoteWebDriver _driver;
         private const string BaseAddress = @"http://unro.minjust.ru/NKOs.aspx";
-        private static readonly Regex IdRegex = new Regex(@"\d{6,9}", RegexOptions.Compiled);
 
-        public OnGoogleSearchPage()
+        public MinjustParser()
         {
             var capabilities = DesiredCapabilities.Chrome();
             _driver = new RemoteWebDriver(new Uri("http://localhost:5555"), capabilities);
@@ -24,10 +22,9 @@ namespace MinjustParser.Browser
 
         public void Dispose() => _driver.Dispose();
 
-        public void Should_find_search_box()
+        public void Parse()
         {
-            if (!File.Exists("output.csv"))
-                File.Create("output.csv");
+            PrepareFiles();
 
             _driver.Navigate().GoToUrl(BaseAddress);
 
@@ -60,18 +57,23 @@ namespace MinjustParser.Browser
                     streamWriter.Flush();
                 }
 
-                var nextPageButton = GetNextPageButton(currentPage);
-                if (nextPageButton == null)
-                {
-                    WriteWithTime("Done");
-                    break;
-                }
                 currentPage++;
-                WriteWithTime("Going to page");
-                nextPageButton.Click();
+                WriteWithTime($"Going to page {currentPage}");
+                _driver.ExecuteScript("__doPostBack('pdg','next')");
             }
 
             _driver.Quit();
+        }
+
+        private static void PrepareFiles()
+        {
+            if (File.Exists("output_last.csv"))
+                File.Delete("output_last.csv");
+
+            if (File.Exists("output.csv"))
+                File.Move("output.csv", "output_last.csv");
+
+            File.Create("output.csv");
         }
 
         private IWebElement GetNextPageButton(int currentPage)

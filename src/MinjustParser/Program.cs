@@ -17,8 +17,8 @@ namespace MinjustParser
 
                 var selenium = Process.Start("chromedriver.exe", "--port=5555");
 
-                var onGoogleSearchPage = new OnGoogleSearchPage();
-                onGoogleSearchPage.Should_find_search_box();
+                var onGoogleSearchPage = new Browser.MinjustParser();
+                onGoogleSearchPage.Parse();
                 selenium?.Kill();
             }
             catch (Exception e)
