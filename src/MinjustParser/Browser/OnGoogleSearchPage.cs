@@ -43,7 +43,7 @@ namespace MinjustParser.Browser
                 
                 var rows = _driver.FindElements(By.TagName("tr"));
                 var goodRows = rows
-                    .Where(e => e.GetCssValue("cursor") == "auto")
+                    .Where(e => e.GetCssValue("cursor") == "auto" && e.GetAttribute("odd") != null)
                     .ToList();
                 Console.WriteLine($"Found {goodRows.Count} rows");
 
@@ -54,6 +54,7 @@ namespace MinjustParser.Browser
                     {
                         WriteRow(streamWriter,row);
                     }
+                    streamWriter.Flush();
                 }
 
                 var page = GetNextPageButton(currentPage);
@@ -108,11 +109,12 @@ namespace MinjustParser.Browser
             }
             
             var text = string.Join("\t", dataElements.Select(de => de.Text));
+            text = text.Replace("-\r\n", string.Empty);
             if (string.IsNullOrWhiteSpace(text))
                 return;
 
             streamWriter.WriteLine(text);
-            streamWriter.Flush();
+            
         }
     }
 }
